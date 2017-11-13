@@ -5,8 +5,16 @@ package pappu.com.facedetection.java_jni;
  */
 
 public class Facedetection {
+    public Facedetection(){
+        initialize();
+    }
     static {
         System.loadLibrary("facedetection");
     }
-    public native int getid();
+    private native void initialize();
+
+    public native boolean deserialize(String openCVXMLPath);
+    public native long[] getFaceRectangle();
+    public native boolean faceDetect(byte[] imageBuf, long imageWidth, long imageHeight,
+                                  int orientation,int coreNumber,boolean applyHistogram);
 }

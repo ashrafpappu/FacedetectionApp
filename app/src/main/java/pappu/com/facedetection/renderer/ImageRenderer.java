@@ -8,8 +8,10 @@ import android.opengl.Matrix;
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
+import pappu.com.facedetection.datamodel.Orientation;
 import pappu.com.facedetection.datamodel.PreviewInfo;
 import pappu.com.facedetection.utils.AppUtils;
+import pappu.com.facedetection.utils.TransformationHelper;
 
 
 public class ImageRenderer implements GLSurfaceView.Renderer{
@@ -19,8 +21,6 @@ public class ImageRenderer implements GLSurfaceView.Renderer{
     private final float[] mtrxProjectionAndView = new float[16];
     private PreviewRenderer previewRenderer;
 
-    private int width = 0;
-    private  int height = 0;
     int offsceenPreviewWidth, offScreenPreviewHeight;
     private static String TAG = "ImageRenderer";
     private YUVGLRender yuvglRender;
@@ -32,8 +32,10 @@ public class ImageRenderer implements GLSurfaceView.Renderer{
 
     private Context context;
     PreviewInfo previewInfo;
+    private boolean isDrawRect = false;
 
-    private OnscreenTextureDraw onscreenTextureDraw;
+
+    private DrawRect drawRect =null;
 
     public ImageRenderer(Context context, int previewWidth, int previewHeight){
         this.context = context;
@@ -42,7 +44,7 @@ public class ImageRenderer implements GLSurfaceView.Renderer{
         yuvglRender = new YUVGLRender(context);
         previewRenderer = new PreviewRenderer(context);
         previewRenderer.setYuvglRender(yuvglRender);
-        onscreenTextureDraw = new OnscreenTextureDraw();
+
     }
 
     public void changeCameraOrientation(int cameraId) {
@@ -53,13 +55,17 @@ public class ImageRenderer implements GLSurfaceView.Renderer{
         previewRenderer.updateYUVBuffers(imageBuf, offScreenPreviewHeight, offsceenPreviewWidth);
     }
 
-
+    public void drawFaceRect(long[] rect, Orientation orientation){
+        isDrawRect = true;
+        drawRect.updateRect(TransformationHelper.transformRectangle(rect, orientation, previewInfo.previewWidth, previewInfo.preiviewHeight, offsceenPreviewWidth, offScreenPreviewHeight),previewInfo.previewWidth,previewInfo.preiviewHeight);
+    }
 
 
     @Override
     public void onSurfaceCreated(GL10 gl10, EGLConfig eglConfig) {
         previewRenderer.intitPreviewShader();
-        onscreenTextureDraw.initOnScreenShaderProgramm(context);
+        drawRect = new DrawRect(context);
+        drawRect.loadShaders();
         GLES20.glDisable(GLES20.GL_DEPTH_TEST);
         GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA);
         GLES20.glEnable(GLES20.GL_BLEND);
@@ -86,8 +92,7 @@ public class ImageRenderer implements GLSurfaceView.Renderer{
 
     @Override
     public void onSurfaceChanged(GL10 gl10, int width, int height) {
-        this.width = width;
-        this.height = height;
+
         GLES20.glViewport(0, 0, width, height);
         previewInfo = AppUtils.getadjustedPreview(width,height, offsceenPreviewWidth, offScreenPreviewHeight,null);
         GLES20.glViewport(previewInfo.offsetX, previewInfo.offsetY, previewInfo.previewWidth, previewInfo.preiviewHeight);
@@ -112,25 +117,20 @@ public class ImageRenderer implements GLSurfaceView.Renderer{
         GLES20.glViewport(previewInfo.offsetX, previewInfo.offsetY, previewInfo.previewWidth, previewInfo.preiviewHeight);
         GLES20.glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
-        onscreenTextureDraw.onScreenRender(offScreenTexureId[0]);
-    }
-
-    void offScreenRender(){
-        GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, offScreenFrameBufferId[0]);
-        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, offScreenTexureId[0]);
-        GLES20.glFramebufferTexture2D(GLES20.GL_FRAMEBUFFER, GLES20.GL_COLOR_ATTACHMENT0, GLES20.GL_TEXTURE_2D, offScreenTexureId[0], 0);
-        GLES20.glViewport(0, 0, offScreenPreviewHeight, offsceenPreviewWidth);
-        GLES20.glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
         renderOnBuffer();
     }
 
+
     void renderOnBuffer(){
         previewRenderer.renderPreview();
+        if(isDrawRect){
+            drawRect.render();
+            isDrawRect = false;
+        }
     }
 
     @Override
     public void onDrawFrame(GL10 gl10) {
-        offScreenRender();
         onScreenDraw();
     }
 
