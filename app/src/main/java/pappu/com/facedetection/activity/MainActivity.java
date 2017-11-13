@@ -9,12 +9,10 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 
 import pappu.com.facedetection.R;
-import pappu.com.facedetection.java_jni.Facedetection;
 
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener{
@@ -29,13 +27,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-
-
         setContentView(R.layout.activity_main);
-
-        Facedetection facedetection = new Facedetection();
-        Log.d("MainActivity",""+facedetection.getid());
 
         //density();
         isExternalStorageWritable();

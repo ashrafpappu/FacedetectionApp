@@ -19,12 +19,19 @@ import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.Toast;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
 
 import pappu.com.facedetection.R;
 import pappu.com.facedetection.datamodel.Orientation;
 import pappu.com.facedetection.glview.GlSurfaceView;
+import pappu.com.facedetection.java_jni.Facedetection;
 import pappu.com.facedetection.renderer.ImageRenderer;
+import pappu.com.facedetection.utils.FileUtils;
 
 
 /**
@@ -48,6 +55,9 @@ public class CameraActivity extends Activity implements SensorEventListener, Cam
     private Button imageCaptureButton,videoCaptureButton;
     private GlSurfaceView glSurfaceView;
     private ImageRenderer imageRenderer;
+    private File mCascadeFile;
+    private Facedetection facedetection = new Facedetection();
+    private int cpuCoreNumber = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -63,6 +73,7 @@ public class CameraActivity extends Activity implements SensorEventListener, Cam
         senSensorManager.registerListener(this, senAccelerometer,
                 SensorManager.SENSOR_DELAY_NORMAL);
 
+        cpuCoreNumber = FileUtils.getNumberOfCores();
         previewLayout = (FrameLayout)findViewById(R.id.preview);
         imageCaptureButton = (Button)findViewById(R.id.capture_image);
         videoCaptureButton = (Button)findViewById(R.id.capture_video);
@@ -74,6 +85,7 @@ public class CameraActivity extends Activity implements SensorEventListener, Cam
         glSurfaceView.setRenderer(imageRenderer);
         glSurfaceView.setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
         previewLayout.addView(glSurfaceView);
+        deserializeFaceDetectionXmls();
 
 
     }
@@ -98,12 +110,39 @@ public class CameraActivity extends Activity implements SensorEventListener, Cam
         }
     }
 
+    public void deserializeFaceDetectionXmls(){
+            InputStream is = this.getResources().openRawResource(R.raw.haarcascade_frontalface_alt2);
+            try {
+                File cascadeDir = this.getDir("cascade", Context.MODE_PRIVATE);
+                mCascadeFile = new File(cascadeDir, "haarcascade_frontalface_alt2.xml");
+                FileOutputStream os = null;
+                os = new FileOutputStream(mCascadeFile);
+                byte[] buffer = new byte[4096];
+                int bytesRead;
+                while ((bytesRead = is.read(buffer)) != -1) {
+                    os.write(buffer, 0, bytesRead);
+                }
+                is.close();
+                os.close();
 
+                Log.d(" desirealize  ",""  + facedetection.deserialize(mCascadeFile.getAbsolutePath()));
+                cascadeDir.delete();
+
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+    }
 
     @Override
     public void onPreviewFrame(byte[] data, Camera camera) {
         imageRenderer.updateYUVBuffers(data);
         glSurfaceView.requestRender();
+        if(facedetection.faceDetect(data,mFrameWidth,mFrameHeight,orientation.value(),cpuCoreNumber,false)){
+            imageRenderer.drawFaceRect(facedetection.getFaceRectangle(),orientation);
+        }
+
     }
 
 

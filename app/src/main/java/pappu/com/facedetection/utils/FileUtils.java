@@ -27,6 +27,7 @@ import android.os.Build;
 import android.os.Environment;
 import android.support.annotation.NonNull;
 import android.support.annotation.RawRes;
+import android.util.Log;
 import android.view.Display;
 import android.view.WindowManager;
 
@@ -40,10 +41,29 @@ import java.io.InputStreamReader;
 import java.util.Calendar;
 import java.util.regex.Pattern;
 
-/**
- * Created by darrenl on 2016/3/30.
- */
+
 public class FileUtils {
+
+    public static String getFaceShapeModelPath(Context context) {
+        File sdcard = Environment.getExternalStorageDirectory();
+        String folder_main = context.getPackageName();
+        File f = new File(sdcard.getAbsolutePath(), folder_main);
+        if (!f.exists()) {
+            if (f.mkdirs()) {
+
+                Log.d("Constants","Directory creation failed: "+folder_main);
+            }
+            else {
+
+                Log.d("Constants","Directory creation successfull: "+folder_main);
+            }
+
+        }
+        String targetPath = sdcard.getAbsolutePath() + File.separator + context.getPackageName() + File.separator + "shape_predictor_68_face_landmarks.dat";
+        return targetPath;
+    }
+
+
     @NonNull
     public static final void copyFileFromRawToOthers(@NonNull final Context context, @RawRes int id, @NonNull final String targetPath) {
         InputStream in = context.getResources().openRawResource(id);
