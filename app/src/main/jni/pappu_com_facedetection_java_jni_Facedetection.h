@@ -9,11 +9,35 @@ extern "C" {
 #endif
 /*
  * Class:     pappu_com_facedetection_java_jni_Facedetection
- * Method:    getid
- * Signature: ()I
+ * Method:    initialize
+ * Signature: ()V
  */
-JNIEXPORT jint JNICALL Java_pappu_com_facedetection_java_1jni_Facedetection_getid
+JNIEXPORT void JNICALL Java_pappu_com_facedetection_java_1jni_Facedetection_initialize
   (JNIEnv *, jobject);
+
+/*
+ * Class:     pappu_com_facedetection_java_jni_Facedetection
+ * Method:    deserialize
+ * Signature: (Ljava/lang/String;)Z
+ */
+JNIEXPORT jboolean JNICALL Java_pappu_com_facedetection_java_1jni_Facedetection_deserialize
+  (JNIEnv *, jobject, jstring);
+
+/*
+ * Class:     pappu_com_facedetection_java_jni_Facedetection
+ * Method:    getFaceRectangle
+ * Signature: ()[J
+ */
+JNIEXPORT jlongArray JNICALL Java_pappu_com_facedetection_java_1jni_Facedetection_getFaceRectangle
+  (JNIEnv *, jobject);
+
+/*
+ * Class:     pappu_com_facedetection_java_jni_Facedetection
+ * Method:    faceDetect
+ * Signature: ([BJJIIZ)Z
+ */
+JNIEXPORT jboolean JNICALL Java_pappu_com_facedetection_java_1jni_Facedetection_faceDetect
+  (JNIEnv *, jobject, jbyteArray, jlong, jlong, jint, jint, jboolean);
 
 #ifdef __cplusplus
 }
